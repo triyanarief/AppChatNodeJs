@@ -85,7 +85,7 @@
         $('#user_lists').empty();
 
         for(var i = 0; i < usernames.length; i++) {
-          $('#user_lists').append($('<li id="user_' + usernames[i] + '>"').text(usernames[i]));
+          $('#user_lists').append($('<li id="user_' + usernames[i] + '">').text(usernames[i]));
         }
       })
 
@@ -99,7 +99,7 @@
       $('#submit_name').click(function(){
         if($('#nama_user') != '') {
           username = $('#nama_user').val();
-          socket.emit('registerUser', username); 
+          socket.emit('registerUser', username);
         }
       });
 
