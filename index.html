@@ -1,104 +1,134 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <style>
-  form {
-    position: absolute;
-    bottom: 0px;
-    width: 100%;
-    background: grey;
-    padding: 20px;
-  }
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Simple Chat Apps</title>
+    <style media="screen">
+      form{
+        position: absolute;
+        bottom: 0px;
+        width: 100%;
+        background: grey;
+        padding: 20px;
+      }
+      li{
+        padding: 5px;
+      }
+      #messages li:nth-child(even){
+        background: #333;
+        color: white;
+      }
+      #nama_user {
+        float: left; width: 20%; height: 30px; border: none;
+      }
+      #text_box {
+        float: left; width: 40%; height: 30px; border: none; margin-left: 10px;
+      }
+      button{
+        float: left; width: 20%; height: 33px;
+      }
 
-  #text_box {
-    float: left;
-    width: 40%;
-    height: 30px;
-    border: none;
-    margin-left: 10px;
-  }
+      .hidden {
+        display: none;
+      }
 
-  #nama_user {
-    float: left;
-    width: 20%;
-    height: 30px;
-    border: none;
-  }
+      #leftbox {
+        float: left;
+        width: 70%;
+      }
 
-  button {
-    float: left;
-    width: 20%;
-    height: 33px;
-    margin-left: 10px;
-  }
+      #rightbox {
+        float: left;
+        width: 25%;
+      }
+    </style>
+  </head>
+  <body>
 
-  li:nth-child(even) {
-    background-color: green;
-    color: white;
-    opacity: 0.5;
-    margin-top: 5px;
-    border-top-right-radius: 2%;
-    border-bottom-right-radius: 2%;
-    border-top-left-radius: 2%;
-    border-bottom-left-radius: 2%;
-    font-size: 18px;
-    font-family: sans-serif;
-    width : auto;
-  }
+    <div id="homepage">
+      <h1> Selamat Datang di WebChat!</h1>
+      <input type="text" id="nama_user" placeholder="nama kamu">
+      <button id="submit_name">Masuk</button>
+    </div>
 
-  li:nth-child(odd) {
-    background-color: blue;
-    color: white;
-    opacity: 0.5;
-    margin-top: 5px;
-    border-radius: 70%;
-    border-top-right-radius: 2%;
-    border-bottom-right-radius: 2%;
-    border-top-left-radius: 2%;
-    border-bottom-left-radius: 2%;
-    font-size: 18px;
-    font-family: monospace;
-    width: auto;
-  }
+    <div id="chatroom" class="hidden">
+      <div id="leftbox">
+        <ul id="messages"></ul>
+      </div>
 
-  li {
-    padding: 5px;
-  }
+      <div id="rightbox">
+        <h2>daftar user online</h2>
+        <ul id="user_lists"></ul>
+      </div>
 
-  </style>
-  <title>Simple Chat Apps</title>
-</head>
-<body>
-<ul id="messages"></ul>
+      <form>
+        <input type="text" id="text_box" placeholder="chat kamu"> <button> Kirim </button>
+      </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script>
+      var socket = io();
+      var username = '';
+
+      $('form').submit(function(){
+        username = $('#nama_user').val();
+        socket.emit('newMessage', username + ' ' +$('#text_box').val());
+         $('#text_box').val('');
+         isTyping = false;
+         return false;
+      });
+
+      // daftar users
+      socket.on('addOnlineUsers', function(usernames) {
+        $('#user_lists').empty();
+
+        for(var i = 0; i < usernames.length; i++) {
+          $('#user_lists').append($('<li id="user_' + usernames[i] + '>"').text(usernames[i]));
+        }
+      })
+
+      //untuk menampilkan frontend
+      socket.on('newMessage', function(msg){
+        $('#messages').append($('<li>').text(msg + ' || pada: ' + Date()));
+        $(".temporary").remove();
+      });
+
+      // untuk menghidden ketika user daftar nama
+      $('#submit_name').click(function(){
+        if($('#nama_user') != '') {
+          username = $('#nama_user').val();
+          socket.emit('registerUser', username); 
+        }
+      });
+
+      // untuk mengecek status
+      socket.on('registerRespond', function(status) {
+        if(status == false) {
+          alert('User sudah ada cari nama lain!');
+        } else {
+          $('#chatroom').removeClass('hidden');
+          $('#homepage').addClass('hidden');
+        }
+      });
+
+      // kalau ada yang mengetik
+      var isTyping = false;
+      $('#text_box').keyup(function() {
+        if(isTyping == false) {
+          socket.emit('newTyping', username + ' sedang mengetik ....');
+        }
+
+        isTyping = true;
+      });
+
+      socket.on('newTyping', function(msg) {
+        $('#messages').append($('<li class="temporary">').text(msg));
+      });
 
 
-<form>
-  <input type="text" id="nama_user" placeholder="User Name">
-  <input type="text" id="text_box" placeholder="Your Messages"> <button>SEND</button>
-</form>
 
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-<script>
-  var socket = io();
-  var username = '';
-
-  $('form').submit(function(){
-    username = $('#nama_user').val();
-    socket.emit('newMessages', username + ':  ' + $('#text_box').val());
-    $('#text_box').val();
-    return false;
-  });
-
-  // untuk menampilkan pada client side
-  socket.on('newMessages', function(msg) {
-    $('#messages').append($('<li>').text(msg +'\n || Pada : '+ Date()));
-    // $('#messages').append($('<li>').text(Date()));
-  });
-</script>
-</body>
+    </script>
+  </body>
 </html>
