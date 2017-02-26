@@ -1,6 +1,11 @@
-var app  = require('express')();
-var http = require('http').Server(app);
-var io   = require('socket.io')(http);
+// var app  = require('express')();
+// var http = require('http').Server(app);
+var io            = require('socket.io')(app);
+var express       = require('express');
+var app           = express();
+var mongoose      = require('mongoose');
+
+mongoose.connect('mongodb://triyanarief:detroit28arief@ds161209.mlab.com:61209/app-webchat');
 
 
 var users = {};
@@ -51,6 +56,12 @@ io.on('connection', function(socket){
 
 });
 
-http.listen(3000, function(){
-  console.log('listening on 3000...');
+// http.listen(3000, function(){
+//   console.log('listening on 3000...');
+// });
+
+app.listen(process.env.PORT, process.env.IP, function() {
+  var appConsoleMsg = 'iklanmac server has started: ';
+  appConsoleMsg += process.env.IP + ':' + process.env.PORT;
+  console.log(appConsoleMsg);
 });
